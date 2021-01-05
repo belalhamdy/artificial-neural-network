@@ -58,12 +58,7 @@ class Network:
 def main():
     np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
     sizes, n, X, y = dh.get_data('train.txt')
-    for row in X.iterrows():
-        print(row[1])
-        break
-    for row in y.iterrows():
-        print(row[1])
-        break
+
 
 
     sizes = [2, 2, 1]
