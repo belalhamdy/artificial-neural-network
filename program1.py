@@ -1,15 +1,19 @@
 import numpy as np
 from random import random
+import data_handler as dh
 
 
 class Network:
-    def __init__(self, sizes):
+    def __init__(self, sizes, weights=None):
         self.sizes = sizes
         self.weights = []
         self.o = len(self.sizes) - 1
         self.a = [np.zeros(v) for v in sizes]
         for i in range(len(sizes) - 1):
             self.weights.append(np.array([[random() for w in range(sizes[i] + 1)] for q in range(sizes[i + 1])]))
+
+        if weights is not None:
+            self.weights = weights
 
     def net(self, cur, h):
         cur = np.concatenate(([1], cur))
@@ -27,6 +31,7 @@ class Network:
             cur = np.concatenate(([1], cur))
             net = np.dot(w, cur)
             cur = self.a[i + 1] = self.f(net)
+        return cur
 
     def backward_propagation(self, y, alpha):
         deriv = []
@@ -51,6 +56,16 @@ class Network:
 
 
 def main():
+    np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
+    sizes, n, X, y = dh.get_data('train.txt')
+    for row in X.iterrows():
+        print(row[1])
+        break
+    for row in y.iterrows():
+        print(row[1])
+        break
+
+
     sizes = [2, 2, 1]
     data = [
         [0, 0],
@@ -63,11 +78,13 @@ def main():
     crash = Network(sizes)
 
     crash.weights = [np.array([[0.3, -0.9, 1], [-1.2, 1, 1]]), np.array([[0, 1, 0.8]])]
-
     for i in [1]:
         crash.process(np.array(data[i]), np.array(y[i]))
+    #print(crash.weights)
+    #print(crash.forward_propagation(data[1]))
 
-    print(crash.weights)
+    np.save('weights.npy', crash.weights, allow_pickle=True)
+    np.save('sizes.npy', crash.sizes, allow_pickle=True)
 
 
 if __name__ == '__main__':
