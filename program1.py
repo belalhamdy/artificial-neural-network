@@ -1,85 +1,39 @@
 import numpy as np
 from random import random
 import data_handler as dh
+from NeuralNetwork import NeuralNetwork
+from NeuralNetwork import Sigmoid
+import matplotlib.pyplot as plt
 
 
-class Network:
-    def __init__(self, sizes, weights=None):
-        self.sizes = sizes
-        self.weights = []
-        self.o = len(self.sizes) - 1
-        self.a = [np.zeros(v) for v in sizes]
-        for i in range(len(sizes) - 1):
-            self.weights.append(np.array([[random() for w in range(sizes[i] + 1)] for q in range(sizes[i + 1])]))
-
-        if weights is not None:
-            self.weights = weights
-
-    def net(self, cur, h):
-        cur = np.concatenate(([1], cur))
-        return np.dot(self.weights[h], cur)
-
-    def f(self, cur):
-        return 1 / (1 + np.exp(-cur))
-
-    def diff_f(self, y):
-        return y * (1 - y)
-
-    def forward_propagation(self, input):
-        self.a[0] = cur = input
-        for i, w in enumerate(self.weights):
-            cur = np.concatenate(([1], cur))
-            net = np.dot(w, cur)
-            cur = self.a[i + 1] = self.f(net)
-        return cur
-
-    def backward_propagation(self, y, alpha):
-        deriv = []
-        delta = (self.a[self.o] - y) * self.diff_f(self.a[self.o])
-        deriv.append(delta)
-        for i in range(self.o, 1, -1):
-            part = np.dot(self.weights[i - 1].T, delta)
-            part = part[1:]
-            delta = part * self.diff_f(self.a[i - 1])
-            deriv.append(delta)
-
-        deriv.reverse()
-        deltas = np.array(deriv)
-
-        for h in range(self.o):
-            for j in range(len(self.weights[h])):
-                self.weights[h][j] -= alpha * deltas[h][j] * np.concatenate(([1], self.a[h]))
-
-    def process(self, input, y):
-        self.forward_propagation(input)
-        self.backward_propagation(y, 0.3)
+def plot_history(history, c, label):
+    plt.ylabel(label)
+    plt.xlabel('Iteration')
+    plt.plot(history, c=c, label=label)
+    plt.legend()
+    plt.show()
 
 
 def main():
     np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
-    sizes, n, X, y = dh.get_data('train.txt')
+    sizes, x, y = dh.get_data('train.txt')
+    mu, sigma = dh.get_normalization(x)
+    x = dh.apply_normalization(x, mu, sigma)
 
+    activation = (lambda x: x, lambda y: 1)
+    nn = NeuralNetwork(sizes, activation=activation)
 
+    alpha = 0.001
+    costs = nn.train(x, y, alpha, max_epochs=500, eps=1e-7)
 
-    sizes = [2, 2, 1]
-    data = [
-        [0, 0],
-        [0, 1],
-        [1, 0],
-        [1, 1]
-    ]
-    y = [1, 0, 0, 1]
+    y_pred, mse = nn.test(x, y)
+    print("MSE:", mse)
+    plot_history(costs, 'orange', 'Mean Square Error')
 
-    crash = Network(sizes)
-
-    crash.weights = [np.array([[0.3, -0.9, 1], [-1.2, 1, 1]]), np.array([[0, 1, 0.8]])]
-    for i in [1]:
-        crash.process(np.array(data[i]), np.array(y[i]))
-    #print(crash.weights)
-    #print(crash.forward_propagation(data[1]))
-
-    np.save('weights.npy', crash.weights, allow_pickle=True)
-    np.save('sizes.npy', crash.sizes, allow_pickle=True)
+    np.save('weights.npy', nn.weights, allow_pickle=True)
+    np.save('sizes.npy', nn.sizes, allow_pickle=True)
+    np.save('normalization.npy', (mu, sigma), allow_pickle=True)
+    print("Model parameters saved.")
 
 
 if __name__ == '__main__':
