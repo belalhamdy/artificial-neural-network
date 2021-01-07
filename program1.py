@@ -20,11 +20,10 @@ def main():
     mu, sigma = dh.get_normalization(x)
     x = dh.apply_normalization(x, mu, sigma)
 
-    activation = (lambda x: x, lambda y: 1)
-    nn = NeuralNetwork(sizes, activation=activation)
+    nn = NeuralNetwork(sizes)
 
-    alpha = 0.001
-    costs = nn.train(x, y, alpha, max_epochs=500, eps=1e-7)
+    alpha = 0.5
+    costs = nn.train(x, y, alpha, max_epochs=300, eps=1e-7)
 
     y_pred, mse = nn.test(x, y)
     print("MSE:", mse)
@@ -34,7 +33,6 @@ def main():
     np.save('sizes.npy', nn.sizes, allow_pickle=True)
     np.save('normalization.npy', (mu, sigma), allow_pickle=True)
     print("Model parameters saved.")
-
 
 if __name__ == '__main__':
     main()
